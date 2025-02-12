@@ -22,10 +22,28 @@ impl Heuristic {
             // blind heuristic always returns 0
             Heuristic::Blind => 0,
             Heuristic::Hamming => {
-                todo!()
+                let mut hamming = 0;
+                for i in 0..3 {
+                    for j in 0..3 {
+                        if Board::GOAL.value_at(i, j) != board.value_at(i, j) {
+                            // Tester pour la tuile vide
+                            hamming = hamming + 1;
+                        }
+                    }
+                }
+                hamming
             }
             Heuristic::Manhattan => {
-                todo!()
+                let mut manhattan = 0;
+                for i in 0..3 {
+                    for j in 0..3 {
+                        // A finir, ne pas oublier la tuile vide
+                        if Board::GOAL.value_at(i, j) != board.value_at(i, j) {
+                            manhattan = manhattan ;
+                        }
+                    }
+                }
+                manhattan
             }
         }
     }

@@ -2,6 +2,7 @@ use crate::board::*;
 use crate::heuristics::*;
 use crate::min_heap::*;
 use std::collections::*;
+use std::ops::Not;
 use std::time::Duration;
 
 /// Statistics of the search, used to evaluate the performance of the search algorithms.
@@ -32,14 +33,73 @@ pub fn search(init_state: Board) -> (Option<Vec<Direction>>, Stats) {
     let mut heap: MinHeap<Board> = MinHeap::new();
     // the standard library provides a HashMap, that can be used to store the cost or other things
     let mut costs: HashMap<Board, u32> = HashMap::new();
-    // ...
+
+    let mut parent_action: HashMap<Board, (Board, Direction)> = HashMap::new();
+
+    let mut expanded: HashSet<Board> = HashSet::new();
+
+    let mut path: HashSet<Board> = HashSet::new();
+    let mut directions: Vec<Direction> = Vec::new();
+
+    costs.insert(init_state, 0);
+    heap.insert(init_state, 0);
+
+    while !heap.is_empty() {
+        let mut s = heap.pop().expect("No node in the heap");
+
+        if expanded.contains(&s) {
+            continue;
+        }
+
+        if s == Board::GOAL {
+            let mut find: bool = false;
+            let mut parent: (Board, Direction);
+            while !find {
+                match parent_action.get(&s) {
+                    Some(x) => {
+                        parent = *x;
+                        path.insert(parent.0);
+                        directions.push(parent.1);
+                        s = parent.0;
+                        if parent.0 == init_state {
+                            find = true;
+                        }
+                    }
+                    None => find = true,
+                }
+            }
+        }
+
+        for action in DIRECTIONS {
+            let sbis = match s.apply(action) {
+                Some(board) => board,
+                None => continue,
+            };
+
+            let current_cost = costs.get(&s).expect("Cannot find the cost") + 1;
+
+            let found_better_path = match costs.get(&sbis) {
+                Some(previous_cost) => current_cost < *previous_cost,
+                None => true,
+            };
+
+            if found_better_path {
+                costs.insert(sbis, current_cost);
+                parent_action.insert(sbis, (s, action));
+                heap.insert(sbis, current_cost);
+            }
+        }
+        expanded.insert(s);
+    }
+
+    directions.reverse();
 
     // here is an example to measure the runtime and returns the statistics
     let runtime = start.elapsed();
     // example to construct a Stats instance
     let stats = Stats::new(0, runtime);
     // return the results and associated stats
-    (todo!(), stats)
+    (Some(directions), stats)
 }
 
 #[cfg(test)]
