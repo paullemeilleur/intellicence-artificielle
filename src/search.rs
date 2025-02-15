@@ -27,7 +27,7 @@ impl Stats {
     }
 }
 
-pub fn search(init_state: Board) -> (Option<Vec<Direction>>, Stats) {
+pub fn search(init_state: Board, heuristic: &Heuristic) -> (Option<Vec<Direction>>, Stats) {
     let start = std::time::Instant::now();
     // MinHeap provide allows to store the states to explore, with associated priority
     let mut heap: MinHeap<Board> = MinHeap::new();
@@ -42,7 +42,7 @@ pub fn search(init_state: Board) -> (Option<Vec<Direction>>, Stats) {
     let mut directions: Vec<Direction> = Vec::new();
 
     costs.insert(init_state, 0);
-    heap.insert(init_state, 0);
+    heap.insert(init_state, 0 + heuristic.estimate(&init_state));
 
     while !heap.is_empty() {
         let mut s = heap.pop().expect("No node in the heap");
@@ -86,7 +86,7 @@ pub fn search(init_state: Board) -> (Option<Vec<Direction>>, Stats) {
             if found_better_path {
                 costs.insert(sbis, current_cost);
                 parent_action.insert(sbis, (s, action));
-                heap.insert(sbis, current_cost);
+                heap.insert(sbis, current_cost+ heuristic.estimate(&sbis));
             }
         }
         expanded.insert(s);
@@ -110,9 +110,8 @@ mod test {
         use super::*;
 
         // validates that search oes return the optimal plan on the first 20 isntances
-
         for (expected_cost, init) in &INSTANCES[0..20] {
-            let (path, stats) = search(*init);
+            let (path, stats) = search(*init, &Heuristic::Blind);
             let path = path.expect("no plan");
             assert!(init.is_valid_plan(&path));
             assert_eq!(path.len(), *expected_cost as usize);

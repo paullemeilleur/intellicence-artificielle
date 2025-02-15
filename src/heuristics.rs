@@ -26,8 +26,11 @@ impl Heuristic {
                 for i in 0..3 {
                     for j in 0..3 {
                         if Board::GOAL.value_at(i, j) != board.value_at(i, j) {
-                            // Tester pour la tuile vide
-                            hamming = hamming + 1;
+                            if board.value_at(i, j) == 0 {
+                                continue;
+                            } else {
+                                hamming = hamming + 1;
+                            }
                         }
                     }
                 }
@@ -35,15 +38,14 @@ impl Heuristic {
             }
             Heuristic::Manhattan => {
                 let mut manhattan = 0;
-                for i in 0..3 {
-                    for j in 0..3 {
-                        // A finir, ne pas oublier la tuile vide
-                        if Board::GOAL.value_at(i, j) != board.value_at(i, j) {
-                            manhattan = manhattan ;
-                        }
-                    }
+                for i in 1..9 {
+                    let (x, y) = board.position(i);
+                    let (x_goal, y_goal) = Board::GOAL.position(i);
+                    manhattan = manhattan
+                        + (x_goal as i32 - x as i32).abs()
+                        + (y_goal as i32 - y as i32).abs();
                 }
-                manhattan
+                manhattan.try_into().unwrap() 
             }
         }
     }
@@ -57,7 +59,7 @@ mod tests {
         use super::*;
         let board = Board::new([[8, 7, 3], [2, 0, 5], [1, 4, 6]]);
         assert_eq!(Heuristic::Blind.estimate(&board), 0);
-        assert_eq!(Heuristic::Hamming.estimate(&board), todo!());
-        assert_eq!(Heuristic::Manhattan.estimate(&board), todo!());
+        assert_eq!(Heuristic::Hamming.estimate(&board), 7);
+        assert_eq!(Heuristic::Manhattan.estimate(&board), 14);
     }
 }
